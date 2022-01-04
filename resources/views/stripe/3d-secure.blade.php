@@ -19,7 +19,9 @@
 <script src="https://js.stripe.com/v3/"></script>
 
 <script>
-
+// Para clientes con 3D secure se realizara una validación extra
+// Se configura el servicio de Stripe
+// Se realiza una validación que provee Stripe y eventualmente realiza el la redicreccion para la aprovación
     const stripe = Stripe("{{ config('services.stripe.key') }}");
     stripe.handleCardAction("{{$clientSecret}}")
           .then( function(result){
