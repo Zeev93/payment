@@ -30,11 +30,18 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+
     'paypal' => [
         'base_uri' => env('PAYPAL_BASE_URI'),
         'client_id' => env('PAYPAL_CLIENT_ID'),
         'client_secret' => env('PAYPAL_CLIENT_SECRET'),
         'class' => App\Services\PayPalService::class,
-    ]
+    ],
+    'stripe' => [
+        'base_uri' => env('STRIPE_BASE_URI'),
+        'key' => env('STRIPE_KEY'),
+        'secret' => env('STRIPE_SECRET'),
+        'class' => App\Services\StripeService::class,
+    ],
 
 ];

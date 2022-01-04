@@ -4,7 +4,7 @@ Prueba de pasarela de pagos configuración básica de un formulario para probar 
 1. [Paypal](https://www.paypal.com/us/home).
     - [Documentación Paypal](https://developer.paypal.com/api/rest)
 2. [Stripe](https://stripe.com/es)
-    - Documentación Stripe Pendiente...
+    - [Documentación Stripe](https://stripe.com/docs/api)
 
 
 Referencia para futuros proyectos y configuración básica.

@@ -23,7 +23,6 @@ class PaymentController extends Controller
                 'currency' => ['required', 'exists:currencies,iso'],
                 'payment_platform' => ['required', 'exists:payment_platforms,id']
             ];
-
             $request->validate($rules);
 
             $paymentPlatform = $this->paymentPlatformResolver->resolveService($request->payment_platform);
