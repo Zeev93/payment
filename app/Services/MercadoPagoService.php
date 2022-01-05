@@ -13,19 +13,22 @@ class MercadoPagoService {
     protected $key;
     protected $secret;
     protected $baseCurrency;
+    protected $converter;
 
 
     // Inicializar valores del servicio de MercadoPago
-    public function __construct(){
+    public function __construct( CurrencyConversionService $converter ){
         $this->baseUri = config('services.mercadopago.base_uri');
         $this->key = config('services.mercadopago.key');
         $this->secret = config('services.mercadopago.secret');
         $this->baseCurrency = config('services.mercadopago.base_currency');
+
+        $this->converter = $converter;
     }
 
     // Indicando que los valores pasan por referencia y se reflejan inmediatamente
     public function resolveAuthorization(&$queryParams, &$formParams, &$headers){
-
+        $queryParams['access_token'] = $this->resolveAccesToken();
     }
 
     // Decodifica la respuesta del json
@@ -34,20 +37,68 @@ class MercadoPagoService {
     }
 
     // Funcion Para formar la cabecera de Authorization con el clientId y el clientSecret
-    // Referencia: https://developer.paypal.com/docs/api/reference/get-an-access-token/
+    // Referencia: https://www.mercadopago.com.mx/developers/es/guides/online-payments/checkout-api/v1/receiving-payment-by-card
     public function resolveAccesToken(){
-
+        return $this->secret;
     }
 
     // Inicio del proceso de pago de paypal
     public function handlePayment(Request $request){
+        $request->validate([
+            'card_network' => 'required',
+            'card_token' => 'required',
+            'email' => 'required'
+        ]);
 
+        $payment = $this->createPayment(
+            $request->value,
+            $request->currency,
+            $request->card_network,
+            $request->card_token,
+            $request->email
+        );
+
+        if($payment->status === 'approved'){
+            $name = $payment->payer->first_name;
+            $currency = strtoupper($payment->currency_id);
+            $amount = number_format($payment->transaction_amount, 0, '.', ',');
+
+            $originalAmount = $request->value;
+            $originalCurrency = $request->currency;
+            // Redirecciona al home con mensaje de success
+            return redirect()->route('home')->withSuccess(['payment' => "Thanks, {$name}. We received your {$originalAmount} {$originalCurrency} payment ( {$amount} {$currency} )."]);
+        }else{
+            return redirect('home')->withErrors('We were unable to confirm your payment. Try again, please');
+        }
+    }
+
+    // Referencia: https://www.mercadopago.com.mx/developers/es/reference/payments/_payments/post
+    public function createPayment($value, $currency, $cardNetwork, $cardToken, $email, $installments = 1){
+        return $this->makeRequest(
+            'POST',
+            '/v1/payments',
+            [],
+            [
+                'payer' => [
+                    'email' => $email
+                ],
+                'binary_mode' => true,
+                'transaction_amount' => round($value * $this->resolveFactor($currency)),
+                'payment_method_id' => $cardNetwork,
+                'token' => $cardToken,
+                'installments' => $installments,
+                'statement_descriptor' => config('app.name')
+            ],
+            [],
+            $isJsonRequest = true
+        );
     }
 
 
     // Esta funcion redondea los valores para monedas que no admiten decimales como el Yen japones, en caso de admitir mas divisas así
     // Se pueden agregar al array o bien crear un valor en la base de datos.
     public function resolveFactor($currency){
+        return $this->converter->convertCurrency($currency, $this->baseCurrency);
     }
 }
 

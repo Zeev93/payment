@@ -1,7 +1,7 @@
 <label for="" class="mt-3">Card Details: </label>
 <div class="row">
     <div class="col-5">
-        <input type="text" class="form-control mb-3" id="cardNumber" data-checkout="cardNumber" placeholder="Card Number">
+        <input type="number" class="form-control mb-3" id="cardNumber" data-checkout="cardNumber" placeholder="Card Number">
     </div>
     <div class="col-2">
         <input type="text" class="form-control mb-3" id="securityCode" data-checkout="securityCode" placeholder="CVC">
@@ -22,14 +22,14 @@
         <input type="email" class="form-control mb-3" id="cardholderEmail" data-checkout="cardholderEmail" placeholder="email@example.com" name="email">
     </div>
 </div>
-<div class="row">
+{{-- <div class="row">
     <div class="col-2">
         <select class="form-select mb-3" data-checkout="docType"></select>
     </div>
     <div class="col-3">
         <input type="text" class="form-control mb-3" data-checkout="docNumber" placeholder="Document">
     </div>
-</div>
+</div> --}}
 <div class="row">
     <div class="col">
         <small class="form-text text-muted" role="alert">Your payment will be converted to {{ strtoupper(config('services.mercadopago.base_currency')) }}</small>
@@ -41,6 +41,7 @@
     </div>
 </div>
 <input type="hidden" name="card_network" id="cardNetwork">
+<input type="hidden" name="card_token" id="cardToken">
 
 
 @push('scripts')
@@ -50,28 +51,41 @@
 <script>
     // Inicializar mercado Pago y obtener los
     const mercadoPago = window.Mercadopago
-    mercadoPago.setPublishableKey("{{ config('services.mercadopago.key') }}");
-    // Obtener tipos de identificacion
-    mercadoPago.getIdentificationTypes();
+    mercadoPago.setPublishableKey('{{ config('services.mercadopago.key') }}');
 </script>
 
 <script>
     function setCardNetwork(){
-        const cardNumber = document.getElementById("cardNumber");
-        mercadoPago.getPaymentMethod(
-             {"bin" : cardNumber.value.substring(0,6)},
+        let cardNumber = document.getElementById("cardNumber").value;
+        cardNumber = cardNumber.replace(/ /g, '')
+        if(cardNumber.length >= 6){
+            mercadoPago.getPaymentMethod(
+             {"bin" : cardNumber.substring(0,6)},
              function (status, response) {
-                const cardNetwork = document.getElementById("cardNetwork");
-                cardNetwork.value = response[0].id
+                document.getElementById("cardNetwork").value = response[0].id;
+                mercardoPagoForm.submit();
              }
         );
+        }
      }
 </script>
 
 <script>
     const mercardoPagoForm = document.getElementById("paymentForm");
-    mercardoPagoForm.addEventListener('submit', function() {
-
+    mercardoPagoForm.addEventListener('submit', function(e) {
+        if(form.elements.payment_platform.value === "{{ $platform->id }}"){
+                e.preventDefault();
+                mercadoPago.createToken(mercardoPagoForm, function(status, response){
+                    if(status != 200 && status!= 201 ){
+                        const errors = document.getElementById("paymentErrors");
+                        errors.textContent = response.cause[0].description;
+                    }else {
+                        const cardToken = document.getElementById("cardToken")
+                        setCardNetwork()
+                        cardToken.value = response.id;
+                    }
+                })
+        }
     });
 </script>
 @endpush

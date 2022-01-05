@@ -78,7 +78,7 @@ class PayPalService {
         }
 
         // Se envia el mensaje de error redireccionado al home.
-        return redirect('home')->withErrors('We cannot capture your payment. Try again, please');
+        return redirect('home')->withErrors('We were unable to confirm your payment. Try again, please');
     }
 
     // Usando el metodo reutilizable Trait App\Traits\ConsumeExternalServices.php crea una orden enviando los parametros requeridos como:

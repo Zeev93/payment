@@ -85,7 +85,7 @@ class StripeService {
 
         }
         // Se envia el mensaje de error redireccionado al home
-        return redirect()->route('home')->withErrors('We were unable to confirm your payment. Try again, please');
+        return redirect('home')->withErrors('We were unable to confirm your payment. Try again, please');
     }
 
     // Se crea la intencion de pago y se realiza la peticion usando el componente reutilizable Trait App\Traits\ConsumeExternalServices.php
